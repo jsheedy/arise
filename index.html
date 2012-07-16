@@ -1,0 +1,617 @@
+<html>
+  <head>
+    <link rel="stylesheet" type="text/css" href="livearise.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="css/ui-darkness/jquery-ui-1.8.19.custom.css" media="screen" />
+
+    <script src="/socket.io/socket.io.js"></script>
+
+    <script src="jquery-1.7.2.min.js"></script>
+    <script src="jquery-ui-1.8.19.custom.min.js"></script>
+    <script src="jquery.ui.touch-punch.min.js"></script>
+
+    <script src="spectrogram.js"></script>
+    <script src="waveform.js"></script>
+    
+    <!--
+    <script src="processing-1.3.6.js"></script>
+    <script src="fft-processing.js"></script>
+    -->
+
+    <script>
+      //var socket = io.connect('http://192.168.0.3:37339');
+      var socket = io.connect();
+
+      var oscMessages = {};
+      var bg = 1;
+
+      var osc = null;
+      var spectra = {};
+      var audio = [];
+            var radar = null;
+//      var length = [];
+
+/*
+      var grid ;
+      var cols = 100;
+      var rows = 25;
+      grid = [];
+      for(var i=0; i<cols; i++) {
+      	grid.push([]);
+      	for (var j=0; j<rows; j++) {
+      		grid[i].push(0);
+      		//grid[i][j] = new Cell();
+      	}
+      }
+      */
+      var barlengths = {};
+
+      var waveforms = {};
+      var waveformContainer = null;
+      
+      function handleEnv(data) {
+      		var channel = data.osc._args[1].value;
+      		var value = data.osc._args[0].value;
+      		var waveform = waveforms[channel];
+      		if(!waveform) {
+      		  waveform = new Waveform(waveformContainer, channel);
+      		  waveforms[channel] = waveform;
+      		}
+      		waveform.Update(value);
+      }
+      
+      function handleEnvMaster(data) {
+      		// var channel = data.osc._args[1].value;
+      		// var value = data.osc._args[0].value;
+      		var vals = data.osc._args[0].value.split(/\s+/).map(parseFloat);
+      		for(var i=0; i<vals.length; i++) {
+      		  var channel = (i+1).toString();
+      		  var value = vals[i];
+      		  var waveform = waveforms[channel];
+        		if(!waveform) {
+        		  waveform = new Waveform(waveformContainer, channel);
+        		  waveforms[channel] = waveform;
+        		}
+        		waveform.Update(value);
+        		
+        		if(channel == radar.envChannel) {
+        		  radar.length = value;
+        		}
+      		}
+
+      }
+
+      function closeButton() {
+        alert("implement me!");
+      }
+      function handleFFT(data) {
+        var values = data.osc._args[0].value.split(" ").map(parseFloat);
+        var channel = data.osc._args[1].value;
+        if(!spectra[channel]) {
+          var c = $("<canvas class='fft-canvas' width='800' height='100'></canvas>");
+          var container = $("<div class='canvas-container'></div>");
+          $("#fft-canvas-container").append(container);
+          container.append(c);
+          var closeButton = new Image();
+          closeButton.width = 50;
+          closeButton.style.position = "absolute";
+          closeButton.src = "images/closebutton-md.png";
+          closeButton.onClick = closeButton;
+          container.append(closeButton);
+          spectra[channel] = new XionSpectrumCanvas(c.get()[0]);
+        }
+        var spectrum = spectra[channel];
+        spectrum.Update(values);
+        
+      }
+      
+      function handleFFTMaster(data) {
+        //var values = data.osc._args[0].value.split(" ").map(parseFloat);
+        //var channel = data.osc._args[1].value;
+        var records = data.osc._args[0].value.split(/\s*\|\s*/);
+        for (var i=0; i<records.length; i++) {
+          if(records[i] == "s")
+            continue;
+          var channel = (i+1).toString();
+          var values = records[i].split(" ").map(parseFloat);
+          
+          if(!spectra[channel]) {
+            var c = $("<canvas class='fft-canvas' width='800' height='100'></canvas>");
+            var container = $("<div class='canvas-container'></div>");
+            $("#fft-canvas-container").append(container);
+            container.append(c);
+            // var closeButton = new Image();
+            //closeButton.width = 50;
+            //closeButton.style.position = "absolute";
+            //closeButton.src = "images/closebutton-md.png";
+            //closeButton.onClick = closeButton;
+            // container.append(closeButton);
+            spectra[channel] = new XionSpectrumCanvas(c.get()[0]);
+          }
+          var spectrum = spectra[channel];
+          spectrum.Update(values);
+          if(channel == radar.fftChannel) {
+             radar.fftValues = values;
+           }
+        }
+
+      }
+      
+      var MidiBox = function(container) {
+        var self = this;
+        self.container = container;
+        self.channels = {};
+        
+        var NoteBox = function(container, h) {
+          var self = this;
+          self.lastT = (new Date()).getTime();
+          self.ui = $("<div class='noteBox' style='height: " + h + "px; width: 120px; border: 1px solid white; margin: 2px; background-color:black;'></div>");
+          container.append(self. ui);
+          self.nv = null;
+          self.vel = null;
+          this.UpdateTime = function(dt) {
+            self.ui.html(self.nv + " . " + self.vel + " . " + dt);
+          }
+          this.Play = function(nv, vel) {
+            self.nv = nv;
+            self.vel = vel;
+            var t = (new Date()).getTime();
+            var dt = t - self.lastT;
+            self.lastT = t;
+            self.UpdateTime(dt);
+            self.ui.css('opacity', 1);
+            self.ui.fadeTo(100, .4, function() {});
+          }
+
+          this.Destroy = function() {
+            self.ui.remove();
+          }
+        }
+        
+        var Channel = function(channelContainer) {
+          var notes = {};
+          this.container = channelContainer;
+          setInterval( function() {
+            var t = (new Date()).getTime();
+            for(var n in notes) {
+              var dt = t - notes[n].lastT;
+              if(dt > (5000+Math.random()*5000)) {
+                notes[n].Destroy();
+                delete notes[n];
+              } else {
+                notes[n].UpdateTime(dt);
+              }
+            }
+          }, 100);
+          
+          this.Play = function (data){
+            var nv = data.osc._args[0].value;
+            var vel = data.osc._args[1].value;
+            var noteBox = notes[nv];
+            if(!noteBox) {
+              noteBox = new NoteBox(this.container,h);
+              notes[nv] = noteBox;
+              var siblings = this.container.find('.noteBox');
+              var n = siblings.length;
+              var h = 200.0 / n;
+              siblings.css('height', h);
+            }
+            noteBox.Play(nv, vel);
+            
+          }
+          
+        }
+        
+        self.Play = function(data) {
+          
+          var c = data.osc._args[2].value;
+          var channel = self.channels[c];
+          if(!channel) {
+            var channelContainer = $("<div style='float: left; height: 100%; width: 150px; border: 1px solid yellow; margin: 5px; background-color:red;'></div>");
+            channel = new Channel(channelContainer);
+            self.channels[c] = channel;
+            this.container.append(channelContainer);
+          }
+          channel.Play(data);
+        }
+      }
+      
+      var midiBox = null;
+      
+      function handleMidiNote(data) {
+        var note = data.osc._args[0].value;
+        var v = data.osc._args[1].value;
+        var channel = data.osc._args[2].value;
+        midiBox.Play(data);  
+      }
+
+      // function val2Color(v) {
+      //   var col = "#";
+      //   col += parseInt(v).toString(16);
+      //   col += parseInt(v).toString(16);
+      //   col += parseInt(v).toString(16);
+      //   //col += "77";
+      //   return col;
+      //  //col = [ parseInt(v), parseInt(v), parseInt(v)];
+      //  //return col;
+      // }
+
+
+      //function handleFFT(data) {
+      	//var values = data.osc._args[0].value.split(" ").map(parseFloat);
+      	/*
+      	for(var i=0; i<cols-1 ; i++) {
+      		//grid[i] = grid[i+1];
+      		for (var j=0; j < rows; j++ ) {
+      			grid[i][j ] = grid[i+1][j];
+      		}
+      	}
+	
+      	for(var i=0; i<values.length; i++) {
+		
+      		var value = values[i];
+      		grid[cols-1][i] = val2Color((value + 255) / 2);
+      	}
+      	*/
+      //}
+
+        function handleMetronome(data){
+          var tempo = data.osc._args[0].value;
+          var beat = data.osc._args[1].value;
+          
+          // radar.rpm = parseInt(tempo);
+          // radar.step = 0;
+          // radar.Update();
+          if(beat == 4) {
+            radar.Init(tempo / 4.0);
+          }
+          $('#metronome-light').css('opacity',1);
+          $('#metronome-light').fadeTo(100, .2, function() {
+          });
+          $("#metronome-data").html("bpm: " + tempo + ".   Beat: " + beat + ".");
+        }
+        function handleMetronome2(data){
+          var tempo = data.osc._args[0].value;
+          //var beat = data.osc._args[1].value;
+          $('#metronome2-light').css('opacity',1);
+          $('#metronome2-light').fadeTo(100, .2, function() {
+          });
+        }
+        function handleMetronome4(data){
+          var tempo = data.osc._args[0].value;
+          //var beat = data.osc._args[1].value;
+          $('#metronome4-light').css('opacity',1);
+          $('#metronome4-light').fadeTo(100, .2, function() {
+          });
+        }
+        var archiveCount = 0;
+        
+        function drawText(text) {
+          var container = $('#speech');
+          // package up last speech.
+          archiveCount++;
+          if(archiveCount > 2) {
+            var o = $('#archive').find("p:first");
+            o.fadeOut('slow', function() {
+              o.remove();
+            });
+          }
+          var p = $('<p>');
+          p.html(container.html());
+          $('#archive').append(p);
+          
+          container.html('');
+    
+          for(var i=0; i<text.length; i++) {
+            setTimeout(function(c, el) {
+              el.innerHTML += c;
+            }, parseInt(8*i + 8*Math.random()), text[i], container[0]);
+      
+          }
+        }
+
+        var debugConsole = null;
+        var oscTable = {};
+        var debugCount = 0;
+  
+        function logMessage(data) {
+
+          var path = data.osc._address;
+          var args = data.osc._args;
+          var m = path + ": ";
+          for(var i=0; i < data.osc._args.length; i++ ){
+            m += data.osc._args[i].value + " ";
+          }
+          
+          var p = $("<p>");
+          p.html(m);
+          debugConsole.append(p);
+          debugCount++;
+          if(debugCount  > 12) {
+            debugConsole.find("p:first").remove();
+          }
+    
+          path = path.replace(/\//g,"");
+          if(path == "fft") {
+            path += data.osc._args[1].value;
+          } else if(path == "audioenvelope") {
+            path += data.osc._args[1].value;
+          }
+          else if(path == "midinote") {
+            path += data.osc._args[2].value;
+          }
+          if(oscTable[path]) {
+            var o = $("#osc-table #" + path);
+            o.html(m);
+          } else {
+            var o = $("<div class='console-message' id='" + path + "'>");
+            if(path.match(/^fft/))
+              o.css('height', '200px');
+            else if(path.match(/^audio/))
+                o.css('height', '60px');
+              
+            o.html(m);
+            $("#osc-table").append(o);
+            oscTable[path] = o;
+          }
+        }
+  
+        socket.on('osc', function (data) {
+
+          if(optionMask & O_LOG)
+            logMessage(data);
+            
+          var path = data.osc._address;
+
+          if(path=="/metronome" && (optionMask & O_METRONOME)) {
+            handleMetronome(data);
+          } 
+          else if(path=="/metronome2" && (optionMask & O_METRONOME)) {
+            handleMetronome2(data);
+          }
+          else if(path=="/metronome4" && (optionMask & O_METRONOME)) {
+            handleMetronome4(data);
+          }
+          else if (path=="/audio/envelope" && (optionMask & O_ENV)) {
+            handleEnv(data);
+          } 
+          else if (path == "/audio/envelope-master" && (optionMask & O_ENV)) {
+            handleEnvMaster(data);
+          }
+      		else if (path == "/fft" && (optionMask & O_FFT)) {
+            handleFFT(data);
+      		}
+      		else if (path == "/fft-master" && (optionMask & O_FFT)) {
+            handleFFTMaster(data);
+      		}
+      		else if (path == "/midi/note" && (optionMask & O_MIDINOTE)) {
+            handleMidiNote(data);
+      		}
+
+        });
+
+      	socket.on('message', function(data) {
+      	  drawText(data.text);
+      	});
+	
+        // var hihat = new Audio();
+        // hihat.src = "sounds/AL_HAT_CHSHORT.WAV";
+        // 
+          
+        function Radar(container) {
+          var self = this;
+          self.envChannel = 1;
+          self.fftChannel = 1;
+          self.startT = 0;
+          self.container = container;
+          self.width = container.width();
+          self.height = container.height();
+          self.centerX = self.width / 2.0;
+          self.centerY = self.height / 2.0;
+          
+          self.context = container.get()[0].getContext('2d');
+          var ctx = self.context;
+
+          self.steps = 100;//32;
+
+          self.rpm = 60;
+          self.theta = 0.0;
+          self.step = 0;
+          self.length = 1.0;
+          self.timeout = null;
+          self.fftValues = [];
+          for(var i=0; i<25; i++) {
+            self.fftValues[i] = 0.0;
+          }
+          self.Val2Color = function(x) {
+            x = parseFloat(x);
+            var r = Math.round(255*x);
+            var g = Math.round(255*Math.sin(x));
+            var b = Math.round(255 - 255*x);
+            var col = "rgb(" + r + "," + g + "," + b + ")";
+            return col;
+          }
+          
+          self.BarkToLinGrad = function() {
+            var lingrad = ctx.createLinearGradient(0,0,1,0);
+            for(var i=0; i<25; i++) {
+              var f = Math.exp(parseFloat(self.fftValues[i]/20.0));
+              var c = "black";
+              if(f > 0) {
+                var c = self.Val2Color(f); 
+              }
+
+              lingrad.addColorStop(i/25.0,c );
+            }
+
+            return lingrad;
+          }
+
+          
+          self.Draw = function() {
+              ctx.fillStyle= "rgba(0,0,0,.01)";
+              ctx.fillRect(0,0,self.width, self.height);
+              self.context.save();
+              //self.context.scale(.7,.35);
+              
+              self.context.translate(self.centerX, self.centerY);
+              self.context.rotate(self.theta); 
+              
+              //self.context.fillStyle = val2Color(Math.random()*255);
+              
+              
+              //ctx.fillStyle = self.Val2Color(self.length);
+
+              
+              
+              self.context.scale(self.width/2.0, self.height/2.0);
+              ctx.fillStyle = self.BarkToLinGrad();
+              //self.context.fillRect(0, 0, self.centerX,40); 
+              //self.context.fillRect(0,0,self.length, .2);
+              ctx.beginPath();
+              ctx.lineWidth = 0.001;
+              ctx.strokeStyle = "#fff";
+              ctx.moveTo(0, 0);
+              var base = self.length*Math.sin(Math.PI/(self.steps));
+              ctx.lineTo(self.length,-base);
+              ctx.lineTo(self.length,base);
+              ctx.lineTo(0,0);
+              ctx.fill();
+              ctx.closePath();
+              ctx.stroke();
+              self.context.restore();
+          }
+          self.Update = function() {
+            
+            //self.step = (self.step + 1) % self.steps;
+            self.theta = (1.0* self.step / self.steps) * (2*Math.PI);
+            self.Draw();
+            self.step++;
+            if(self.step <= self.steps) {
+              var t = (new Date()).getTime();
+              var cycleT = 60.0 / self.rpm; // in seconds
+              var endT = self.startT + cycleT*1000;
+
+              var t = (endT - t) / (self.steps - self.step) - 5;
+              self.timeout = setTimeout(self.Update, t );
+            }
+            
+            // else {
+            //   self.step = 0;
+            //   ctx.clearRect(0,0,self.width,self.height);
+            // }
+          }
+          
+          self.Init = function(tempo){
+            clearTimeout(self.timeout);
+            //ctx.clearRect(0,0,self.width,self.height);
+            ctx.fillStyle= "rgba(0,0,0,.2)";
+            ctx.fillRect(0,0,self.width, self.height);
+            self.rpm = parseInt(tempo);
+            self.step = 0;
+            self.startT = (new Date()).getTime();
+            self.Update();
+          }
+        }
+
+        
+        var optionMask = 0;
+        var O_FFT = 1;
+        var O_ENV = 2;
+        var O_LOG = 4;
+        var O_METRONOME = 8;
+        var O_MIDINOTE = 8;
+        
+      	$(document).ready(function() {
+      	  radar = new Radar($('#radar'));
+      	  radar.Update();
+      	  
+      	  debugConsole = $("#debug-console");
+          $("#slider").slider({
+             max: 1000,
+             slide: function(event, ui) {
+               console.debug(ui.value);
+               socket.emit('slider', {slider: ui.value});
+             }
+          });
+          $('#username').change(function(evt) {
+            console.log($(this).val());  
+          });
+          midiBox = new MidiBox($('#midibox'));
+          waveformContainer = $('#waveform-container');
+          
+          var optionsContainer = $('#options');
+
+          
+          /*
+          var options = new (function() {
+            var mask = 0;
+          })();
+          */
+          var options = [
+            {name: "FFT", bit: O_FFT},
+            {name: "ENV", bit: O_ENV},
+            {name: "MIDI", bit: O_MIDINOTE},
+            {name: "METRONOME", bit: O_METRONOME},
+            {name: "LOG", bit: O_LOG},
+          ];
+          
+          for(var i=0; i<options.length; i++) {
+            var option = options[i];
+            var o = $('<div class="option">');
+            o.html(option.name);
+            o.on('click', null, {option: option}, function(evt) {
+              optionMask ^= evt.data.option.bit;
+              if(optionMask & evt.data.option.bit) {
+                $(this).css('backgroundColor', 'green');
+              } else {
+                $(this).css('backgroundColor', 'red');
+                
+              }
+            });
+            optionsContainer.append(o);
+          }
+
+        });   
+    </script>
+  </head>
+  <body>
+    
+    <canvas width=300 height=300 id="radar"></canvas>
+    
+    <div id="options">
+
+      
+    </div>
+    <div id="waveform-container" style="width: 600px"></div>
+
+    <div id="midibox" style="position:absolute; top: 0px; left: 900px;height: 300px; border: 2px solid white;">
+
+    </div>
+    <!--
+    <input type="text" id="username"></input>
+-->
+      <div id="archive"></div>
+    <div id="fft-canvas-container"></div>
+    <div id="debug-console"></div>
+    <div id="debug-console-container">
+
+      <div id="speech"></div>
+      <div id="metronome">
+        <img id="metronome-light" src="images/signal.png" style="width:30px; height: 30px;" />
+        <img id="metronome2-light" src="images/signal.png" style="width:30px; height: 30px;" />
+        <img id="metronome4-light" src="images/signal.png" style="width:30px; height: 30px;" />
+        <div id="metronome-data" style="height: 50px;"></div>
+      </div>
+      <div id="osc-table"></div>
+      
+    </div>
+   
+    <div id="header">
+      <img src="images/header.jpg" />
+    </div>
+    <!--
+     <div id="slider" style="margin: 20px; margin-right: 220px;"></div>
+     -->
+  </body>
+  
+</html>
