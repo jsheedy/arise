@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>VHI three.js</title>
+
+  <style type="text/css">
+    body {
+      background-color:black;
+      color: white;
+    }
+    * {
+      color:white;
+    }
+    h1 {
+      color: white;
+    }
+  </style>
+
+
+  <script src="js/Three.js"></script>
+  <script src="../js/jquery-1.7.2.min.js"></script>  
+  <script src="js/OBJLoader.js"></script>
+  <script type="text/javascript">
+  var velotron = null;
+  $(document).ready(function() {
+
+    var WIDTH = window.innerWidth,
+      HEIGHT = window.innerHeight;
+
+    var VIEW_ANGLE = 45,
+      ASPECT = WIDTH / HEIGHT,
+      NEAR = 0.1,
+      FAR = 10000;
+
+    var renderer = new THREE.WebGLRenderer();
+    var camera =
+      new THREE.PerspectiveCamera(
+        VIEW_ANGLE,
+        ASPECT,
+        NEAR,
+        FAR);
+
+    var scene = new THREE.Scene();
+
+    scene.add(camera);
+    camera.position.z = 100;
+    var cam_dz = 1;
+
+    renderer.setSize(WIDTH, HEIGHT);
+    
+    // set up the sphere vars
+    var radius = 50,
+        segments = 16,
+        rings = 16;
+
+    var sphereMaterial = new THREE.MeshBasicMaterial( { color: 0xff00ff, wireframe: true } );
+    
+    var sphere = new THREE.Mesh(
+
+      new THREE.SphereGeometry(
+        radius,
+        segments,
+        rings),
+
+      sphereMaterial);
+
+    // add the sphere to the scene
+    scene.add(sphere);
+    document.body.appendChild( renderer.domElement );
+    
+    var obj = "./velotron/velotron_arise_crouch.obj";
+    
+    var ambient = new THREE.AmbientLight( 0x101030 );
+    scene.add( ambient );
+    //scene.fog = new THREE.FogExp2( 0x9999ff, 0.0055 );
+    
+  	// FLOOR
+  	var floorTexture = new THREE.ImageUtils.loadTexture( 'images/checkerboard.jpg' );
+  	floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping; 
+  	floorTexture.repeat.set( 10, 10 );
+  	var floorMaterial = new THREE.MeshBasicMaterial( { map: floorTexture } );
+  	var floorGeometry = new THREE.PlaneGeometry(1000, 1000, 10, 10);
+  	var floor = new THREE.Mesh(floorGeometry, floorMaterial);
+  	floor.position.y = -20.5;
+  	floor.doubleSided = true;
+  	//scene.add(floor);
+  	
+    var directionalLight = new THREE.DirectionalLight( 0xffeedd );
+    directionalLight.position.set( 0, 0, 1 ).normalize();
+    scene.add( directionalLight );
+
+    //var texture = THREE.ImageUtils.loadTexture( 'textures/ash_uvgrid01.jpg' );
+    var material = new THREE.MeshBasicMaterial( { color: 0xffffff, wireframe: true } );
+    var material = new THREE.MeshLambertMaterial(
+        {
+          color: 0xCCFF00
+        });
+    var material = new THREE.MeshPhongMaterial( { ambient: 0xF50505, color: 0xffcccc, specular: 0x555555, shininess: 30 } );
+    var loader = new THREE.OBJLoader();
+    
+
+    loader.load( obj, function ( object ) {
+
+            for ( var i = 0, l = object.children.length; i < l; i ++ ) {
+
+                    // object.children[ i ].material.map = texture;
+                    object.children[ i ].material = material;
+
+            }
+
+            object.position.y =  -20;
+            scene.add( object );
+            velotron = object;
+    } );
+    
+    
+    var mouseX = 0;
+    var mouseY = 0;
+    var windowHalfX = window.innerWidth / 2;
+		var windowHalfY = window.innerHeight / 2;
+    document.addEventListener( 'mousemove', onDocumentMouseMove, false );
+    function onDocumentMouseMove( event ) {
+
+			mouseX = ( event.clientX - windowHalfX ) / 2;
+			mouseY = ( event.clientY - windowHalfY ) / 2;
+		}
+    
+    animate();
+    function animate() {
+  		// note: three.js includes requestAnimationFrame shim
+  		requestAnimationFrame( animate );
+  		render();
+  	}
+
+  	function render() {
+  	  //if (velotron)
+  		  //velotron.rotation.y += 0.02;
+  		sphere.rotation.x += 0.01;
+  		sphere.rotation.y += 0.02;
+  		if (camera.position.z <= 10 || camera.position.z >=200)
+  		  cam_dz *= -1;
+
+  		camera.position.z += cam_dz;
+			camera.position.x += ( mouseX - camera.position.x ) * .05;
+			camera.position.y += ( - mouseY - camera.position.y ) * .05;
+			camera.lookAt( scene.position );
+  		renderer.render( scene, camera );
+  	}
+  });
+  </script>
+</head>
+<body>
+  <h1>VELOTRON ARISE</h1>
+</body>
+</html>
