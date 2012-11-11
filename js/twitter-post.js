@@ -1,12 +1,19 @@
 // only run every once in a while, schedule every minute from cron.
-if(Math.random() > 0.035) {
-  console.log("exiting");
-  process.exit(code=0);
-} else {
+DEBUG = process.argv[2] == "--debug"
+NOW = process.argv[2] == "--now"
+
+var sleeptime = 0;
+
+if(! DEBUG && ! NOW) {
+  if(Math.random() > 0.012) {
+    console.log("exiting");
+    process.exit(code=0);
+  }
   sleeptime = Math.random() * 60 * 5 * 1000;
   console.log("continuing in seconds: " +  sleeptime);
-  setTimeout(post, sleeptime)
 }
+
+setTimeout(post, sleeptime)
 
 function post() 
 {
@@ -23,23 +30,29 @@ function post()
 
   graph.load(function() {
     var spk = ""
-    while( spk = graph.Speak())
+    var numberOfSentences = parseInt(1 + Math.random()*5);
+    while( spk = graph.Speak(null, numberOfSentences))
     {
-      if(spk.length <= 140) {
+      if(spk.length <= 140 && spk.length >= 10) {
         break;
       }
     }
+    spk = spk.replace(/[@]*velotron([ .,!;'"]+)/gi, "@velotron$1");
+    spk = spk.replace(/[@]*anatomecha([ .,!;'"]+)/gi, "@anatomecha$1");
 
     console.log(spk);
 
-    twit.updateStatus(spk,
-        function (err, data) {
-          console.log("data: ");
-          console.log(data);
-          console.log("err: ");
-          console.log(err);
-        }
-    );
+    if(!DEBUG)
+    {
+      twit.updateStatus(spk,
+          function (err, data) {
+            console.log("data: ");
+            console.log(data);
+            console.log("err: ");
+            console.log(err);
+          }
+      );
+    }
   });
 
 }
