@@ -1,6 +1,18 @@
 // only run every once in a while, schedule every minute from cron.
 DEBUG = process.argv[2] == "--debug"
 NOW = process.argv[2] == "--now"
+LOOP = process.argv[2] == "--loop"
+
+var startWord = "";
+startWord=null;
+if(process.argv[2] == "--start") {
+  DEBUG=true;
+  startWord = process.argv[3]; 
+}
+
+if(LOOP) {
+  DEBUG = true;
+}
 
 var sleeptime = 0;
 
@@ -19,29 +31,34 @@ function post()
 {
   var twitter = require('ntwitter');
 
-  var twit = new twitter({
-    consumer_key: 'yPCA3dFwRCOwIHZZMhWtxw',
-    consumer_secret: 'HzRRJniVnAGoWcpXbT6Zez7vQvKXNhXF0pToBoo',
-    access_token_key: '795307963-YAbNcpY9HG2pjaL3pIAS4Yxi89dbHLA5D2yxR1Nc',
-    access_token_secret: 'i82dIsVddKkjAhknvA5MnJCUg4awb5LieehBrZauyE'
-  });
-
   var graph = require(__dirname + '/create_graph_from_local_file.js').graph;
+  var credentials = require(__dirname + '/twitter-credentials.js').credentials;
+  
+  var twit = new twitter(credentials);
 
   graph.load(function() {
-    var spk = ""
-    var numberOfSentences = parseInt(1 + Math.random()*5);
-    while( spk = graph.Speak(null, numberOfSentences))
-    {
-      if(spk.length <= 140 && spk.length >= 10) {
-        break;
+    function speak() {
+      var spk = ""
+      var numberOfSentences = parseInt(1 + Math.random()*5);
+      while( spk = graph.Speak(startWord, numberOfSentences))
+      {
+        if(spk.length <= 140 && spk.length >= 10) {
+          break;
+        }
       }
+      spk = spk.replace(/[@]*velotron([ .,!;'"]+)/gi, "@velotron$1");
+      spk = spk.replace(/[@]*anatomecha([ .,!;'"]+)/gi, "@anatomecha$1");
+      return spk;
     }
-    spk = spk.replace(/[@]*velotron([ .,!;'"]+)/gi, "@velotron$1");
-    spk = spk.replace(/[@]*anatomecha([ .,!;'"]+)/gi, "@anatomecha$1");
 
+    var spk = speak();
     console.log(spk);
 
+    if(LOOP) {
+      while(true) {
+        console.log(speak());
+      }
+    }
     if(!DEBUG)
     {
       twit.updateStatus(spk,
