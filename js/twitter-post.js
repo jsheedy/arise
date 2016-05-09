@@ -7,7 +7,7 @@ var startWord = "";
 startWord=null;
 if(process.argv[2] == "--start") {
   DEBUG=true;
-  startWord = process.argv[3]; 
+  startWord = process.argv[3];
 }
 
 if(LOOP) {
@@ -27,13 +27,13 @@ if(! DEBUG && ! NOW) {
 
 setTimeout(post, sleeptime)
 
-function post() 
+function post()
 {
   var twitter = require('ntwitter');
 
   var graph = require(__dirname + '/create_graph_from_local_file.js').graph;
   var credentials = require(__dirname + '/twitter-credentials.js').credentials;
-  
+
   var twit = new twitter(credentials);
 
   graph.load(function() {

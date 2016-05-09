@@ -1,0 +1,4 @@
+wikipedia script kept choking on lines
+<page>
+<title>Wikipedia:Upload log archive/September 2004 (1)</title>
+58291489 - 58297977, 6500 pages of xml.   maybe only grab first pages of each section for parsing.

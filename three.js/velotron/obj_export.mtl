@@ -1,0 +1,180 @@
+newmtl new:crainumSG
+illum 4
+Kd 0.00 0.00 0.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.00 1.00 1.00
+Ns -1.00
+newmtl new:cranium_peak_meter_r_4SG
+illum 4
+Kd 1.00 0.34 0.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+newmtl new:cranium_peak_meter_r_8SG
+illum 4
+Kd 0.00 0.00 0.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+newmtl new:pCube174SG
+illum 4
+Kd 0.00 0.00 0.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.00 0.00 1.00
+Ns -1.00
+newmtl new:pCylinder219SG
+illum 4
+Kd 0.00 0.00 0.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.00 0.00 1.00
+Ns -1.00
+newmtl new:pCylinder221SG
+illum 4
+Kd 0.00 0.00 0.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.00 1.00 1.00
+Ns -1.00
+newmtl new:pCylinder222SG
+illum 4
+Kd 0.00 0.00 0.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.00 1.00 1.00
+Ns -1.00
+newmtl new:polySurface185SG
+illum 4
+Kd 0.00 0.00 0.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.00 0.00 1.00
+Ns -1.00
+newmtl new:polySurface187SG
+illum 4
+Kd 0.00 0.00 0.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.00 0.00 1.00
+Ns -1.00
+newmtl new:polySurface192SG
+illum 4
+Kd 0.00 0.00 0.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.00 1.00 1.00
+Ns -1.00
+newmtl new:visorSG
+illum 4
+Kd 0.47 0.14 0.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 1.00 0.71 0.00
+Ns -0.75
+newmtl new:visor_overlaySG
+illum 4
+Kd 1.00 0.69 0.57
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 1.00 0.71 0.00
+Ns -0.75
+newmtl vel:pSphere4SG
+illum 4
+Kd 0.50 0.50 0.50
+Ka 0.50 0.50 0.50
+Tf 1.00 1.00 1.00
+Ni 1.00
+newmtl vel:peak_meter_cell_1SG
+illum 4
+Kd 0.40 0.40 0.40
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+newmtl vel:peak_meter_cell_2SG
+illum 4
+Kd 0.40 0.40 0.40
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+newmtl vel:peak_meter_cell_3SG
+illum 4
+Kd 0.40 0.40 0.40
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+newmtl vel:peak_meter_cell_4SG
+illum 4
+Kd 0.40 0.40 0.40
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+newmtl vel:peak_meter_cell_5SG
+illum 4
+Kd 0.40 0.40 0.40
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+newmtl vel:peak_meter_cell_6SG
+illum 4
+Kd 0.40 0.40 0.40
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+newmtl vel:peak_meter_cell_7SG
+illum 4
+Kd 0.40 0.40 0.40
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+newmtl vel:peak_meter_cell_8SG
+illum 4
+Kd 0.40 0.40 0.40
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+newmtl vel:peak_meter_cell_9SG
+illum 4
+Kd 0.40 0.40 0.40
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+newmtl vel:peak_meter_cell_10SG
+illum 4
+Kd 0.40 0.40 0.40
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+newmtl vel:polySurface14SG
+illum 4
+Kd 0.31 0.38 0.43
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.22 0.22 0.22
+Ns -1.00
+newmtl vel:polySurface58SG
+illum 4
+Kd 0.07 0.07 0.07
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.50 0.50 0.50
+Ns 18.00
+newmtl vel:polySurface71SG
+illum 4
+Kd 0.29 0.29 0.33
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00

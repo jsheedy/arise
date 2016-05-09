@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>graph</title>
+    <link rel="stylesheet" type="text/css" href="css/ui-darkness/jquery-ui-1.8.19.custom.css" media="screen" />
+
+    <script type="text/javascript" src="jquery-1.8.3.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r69/three.min.js"></script>
+
+    <script type="text/javascript">
+        var graphReadyEvent = new Event('graph');
+
+        $(document).ready(function() {
+          // canvas = $('#canvas');
+          // var context = canvas.get()[0].getContext('2d');
+          // var w = context.width = window.innerWidth;
+          // var h = context.height = window.innerHeight;
+          // canvas.get()[0].width = w;
+          // canvas.get()[0].height = h;
+          // context.fillStyle='black';
+          // context.strokeStyle='black';
+          // context.lineWidth=1;
+
+          // context.moveTo(0,0);
+          // context.lineTo(w,h);
+          // context.stroke();
+          // console.log("done!",w,h);
+
+          document.addEventListener('graph', function (e) {
+            console.log('graph event', graph.Speak());
+
+            var scene = new THREE.Scene();
+            var camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+
+            var renderer = new THREE.WebGLRenderer();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+
+            // var geometry = new THREE.BoxGeometry(1,1,1);
+            // var material = new THREE.MeshBasicMaterial({color: 0x00ff00});
+            // var cube = new THREE.Mesh(geometry, material);
+            // scene.add(cube);
+
+            var geometry = new THREE.SphereGeometry( .05, 20, 20 );
+            var material = new THREE.MeshBasicMaterial( {color: 0xffff00} );
+            $.each(Object.keys(graph.Words), function(i,w) {
+              var sphere = new THREE.Mesh( geometry, material );
+              scene.add( sphere );
+              sphere.translateX(i/10.0);
+              sphere.translateY(i / 10);
+              sphere.translateZ((i+5) % 10);
+            });
+
+            var mouseX = 0;
+            var mouseY = 0;
+            var windowHalfX = window.innerWidth / 2;
+            var windowHalfY = window.innerHeight / 2;
+            document.addEventListener( 'mousemove', onDocumentMouseMove, false );
+            function onDocumentMouseMove( event ) {
+              mouseX = ( event.clientX - windowHalfX ) / 2;
+              mouseY = ( event.clientY - windowHalfY ) / 2;
+            }
+
+            camera.position.z = 5;
+            var cam_dz = 1;
+
+            var render = function () {
+                requestAnimationFrame(render);
+                renderer.render(scene, camera);
+
+                if (camera.position.z <= 10 || camera.position.z >=200) {
+                  cam_dz *= -1;
+                }
+
+                // camera.position.z += cam_dz;
+                camera.position.x += ( mouseX - camera.position.x ) * .05;
+                camera.position.y += ( - mouseY - camera.position.y ) * .05;
+                camera.lookAt( scene.position );
+            };
+
+            render();
+
+          }, false);
+
+
+        });
+    </script>
+    <script type="text/javascript" src="js/comms_graph.js?ver=1"></script>
+    <script type="text/javascript" src="js/get_comms_db.js?ver=1"></script>
+  </head>
+  <body>
+
+    <canvas id="canvas"></canvas>
+
+  </body>
+</html>

@@ -68,9 +68,7 @@
     // add the sphere to the scene
     scene.add(sphere);
     document.body.appendChild( renderer.domElement );
-    
-    var obj = "./velotron/velotron_arise_crouch.obj";
-    
+
     var ambient = new THREE.AmbientLight( 0x101030 );
     scene.add( ambient );
     //scene.fog = new THREE.FogExp2( 0x9999ff, 0.0055 );
@@ -99,14 +97,16 @@
     var material = new THREE.MeshPhongMaterial( { ambient: 0xF50505, color: 0xffcccc, specular: 0x555555, shininess: 30 } );
     var loader = new THREE.OBJLoader();
     
-
-    loader.load( obj, function ( object ) {
+    
+    var crouch_path = "./velotron/velotron_arise_crouch.obj";
+    var arise_path = "./velotron/obj_export.obj";
+    var yay_path = "./velotron/velotron_yay.obj";
+    
+    loader.load( crouch_path, function ( object ) {
 
             for ( var i = 0, l = object.children.length; i < l; i ++ ) {
-
                     // object.children[ i ].material.map = texture;
-                    object.children[ i ].material = material;
-
+                    //object.children[ i ].material = material;
             }
 
             object.position.y =  -20;
@@ -114,7 +114,29 @@
             velotron = object;
     } );
     
+    loader.load( arise_path, function ( object ) {
+
+            for ( var i = 0, l = object.children.length; i < l; i ++ ) {
+                    // object.children[ i ].material.map = texture;
+                    //object.children[ i ].material = material;
+            }
+
+            object.position.x =  50;
+            scene.add( object );
+            //velotron = object;
+    } );
     
+    loader.load( yay_path, function ( object ) {
+
+            for ( var i = 0, l = object.children.length; i < l; i ++ ) {
+                    // object.children[ i ].material.map = texture;
+                    //object.children[ i ].material = material;
+            }
+
+            object.position.x =  -50;
+            scene.add( object );
+            //velotron = object;
+    } );
     var mouseX = 0;
     var mouseY = 0;
     var windowHalfX = window.innerWidth / 2;

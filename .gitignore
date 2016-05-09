@@ -1,1 +1,4 @@
 .DS_STORE
+comms/comms.json
+comms/comms.json*
+js/twitter-credentials.js

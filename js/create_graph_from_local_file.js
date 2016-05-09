@@ -23,7 +23,6 @@ graph.load = function(cb) {
   	  var tokens = split(item.subject + " " + item.body);
   	  graph.AddWords([tokens]);
   	}
-  	//console.log("graph holds " + graph.WordCount() +  " words");
 
   	if(cb)
       cb.call();
